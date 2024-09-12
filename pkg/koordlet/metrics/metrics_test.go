@@ -412,3 +412,36 @@ func TestRuntimeHookCollector(t *testing.T) {
 		RecordRuntimeHookReconcilerInvokedDurationMilliSeconds("pod", "cpu.cfs_quota_us", testErr, 5.0)
 	})
 }
+
+func TestPodModelCollector(t *testing.T) {
+	testingNode := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-node",
+			Labels: map[string]string{
+				"topology.mizar-k8s.io/cluster": "sh-planet1",
+				"topology.mizar-k8s.io/pzone":   "sh-az1",
+				"topology.mizar-k8s.io/region":  "sh",
+			},
+		},
+		Status: corev1.NodeStatus{
+			Allocatable: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("100"),
+				corev1.ResourceMemory: resource.MustParse("200Gi"),
+				apiext.BatchCPU:       resource.MustParse("50000"),
+				apiext.BatchMemory:    resource.MustParse("80Gi"),
+			},
+			Capacity: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("100"),
+				corev1.ResourceMemory: resource.MustParse("200Gi"),
+				apiext.BatchCPU:       resource.MustParse("50000"),
+				apiext.BatchMemory:    resource.MustParse("80Gi"),
+			},
+		},
+	}
+	t.Run("test", func(t *testing.T) {
+		Register(testingNode)
+		defer Register(nil)
+		RecordPodUsedCPU("test-ns", "pod1", "aa0001", "", 0.98)
+		RecordPodUsedMemory("test-ns", "pod1", "aa0001", "", 293112312)
+	})
+}

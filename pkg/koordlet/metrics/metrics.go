@@ -107,7 +107,7 @@ func Register(node *corev1.Node) {
 			PZoneName = ""
 			RegionName = ""
 			PartitionName = ""
-			klog.Warning("register nil node for metrics")
+			klog.Warning("register node nil labels for metrics")
 		}
 	} else {
 		NodeName = ""

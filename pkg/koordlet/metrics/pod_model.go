@@ -19,7 +19,14 @@ var (
 		Subsystem: KoordletSubsystem,
 		Name:      "pod_cpu_usage_hist",
 		Help:      "cpu usage of pod in Histogram",
-		Buckets:   prometheus.ExponentialBuckets(0.025, 1024, 158),
+		Buckets:   prometheus.ExponentialBuckets(0.025, 1.5, 28),
+	}, []string{NodeKey, ClusterKey, PZoneKey, RegionKey, PartitionKey, WorkloadName, PodName, PodNamespace, PodUID})
+
+	PodMemoryUsageHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Subsystem: KoordletSubsystem,
+		Name:      "pod_memory_usage_hist",
+		Help:      "memory usage of pod in Histogram",
+		Buckets:   prometheus.ExponentialBuckets(5<<20, 2, 20),
 	}, []string{NodeKey, ClusterKey, PZoneKey, RegionKey, PartitionKey, WorkloadName, PodName, PodNamespace, PodUID})
 
 	PodModelCollectors = []prometheus.Collector{
@@ -54,4 +61,5 @@ func RecordPodUsedMemory(namespace, podName, podUID, workload string, value floa
 	labels[WorkloadName] = workload
 
 	PodUsedMemory.With(labels).Set(value)
+	PodMemoryUsageHist.With(labels).Observe(value)
 }

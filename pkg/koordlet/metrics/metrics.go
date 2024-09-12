@@ -27,7 +27,19 @@ import (
 const (
 	KoordletSubsystem = "koordlet"
 
-	NodeKey     = "node"
+	NodeKey      = "node"
+	ClusterKey   = "cluster"
+	PZoneKey     = "pzone"
+	RegionKey    = "region"
+	PartitionKey = "partition"
+	WorkloadName = "workload_name"
+
+	ClusterLabelKeyName   = "topology.mizar-k8s.io/cluster"
+	PZoneLabelKeyName     = "topology.mizar-k8s.io/pzone"
+	RegionLabelKeyName    = "topology.mizar-k8s.io/region"
+	PartitionLabelKeyName = "topology.mizar-k8s.io/partition"
+	WorkloadLabelKeyName  = "workload.plan.mizar-universe.io/name"
+
 	PriorityKey = "priority"
 
 	PredictorKey = "predictor"
@@ -56,7 +68,19 @@ const (
 
 var (
 	NodeName string
-	Node     *corev1.Node
+	// ClusterName from label key 'topology.mizar-k8s.io/cluster'
+	ClusterName string
+
+	// PZoneName from label key 'topology.mizar-k8s.io/pzone'
+	PZoneName string
+
+	// RegionName from label key 'topology.mizar-k8s.io/region'
+	RegionName string
+
+	// PartitionName from label key 'topology.mizar-k8s.io/partition'
+	PartitionName string
+
+	Node *corev1.Node
 
 	nodeLock sync.RWMutex
 )
@@ -72,6 +96,19 @@ func Register(node *corev1.Node) {
 
 	if node != nil {
 		NodeName = node.Name
+		labels := node.GetLabels()
+		if labels != nil {
+			ClusterName = labels[ClusterLabelKeyName]
+			PZoneName = labels[PZoneLabelKeyName]
+			RegionName = labels[RegionLabelKeyName]
+			PartitionName = labels[PartitionLabelKeyName]
+		} else {
+			ClusterName = ""
+			PZoneName = ""
+			RegionName = ""
+			PartitionName = ""
+			klog.Warning("register nil node for metrics")
+		}
 	} else {
 		NodeName = ""
 		klog.Warning("register nil node for metrics")
@@ -88,5 +125,21 @@ func genNodeLabels() prometheus.Labels {
 
 	return prometheus.Labels{
 		NodeKey: NodeName,
+	}
+}
+
+func genPodTopologyLabels() prometheus.Labels {
+	nodeLock.RLock()
+	defer nodeLock.RUnlock()
+	if Node == nil {
+		return nil
+	}
+
+	return prometheus.Labels{
+		NodeKey:      NodeName,
+		ClusterKey:   ClusterName,
+		PZoneKey:     PZoneName,
+		RegionKey:    RegionName,
+		PartitionKey: PartitionName,
 	}
 }

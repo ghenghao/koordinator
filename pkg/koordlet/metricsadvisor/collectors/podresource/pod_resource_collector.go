@@ -28,6 +28,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/koordinator-sh/koordinator/pkg/koordlet/metriccache"
+	metricRecorder "github.com/koordinator-sh/koordinator/pkg/koordlet/metrics"
 	"github.com/koordinator-sh/koordinator/pkg/koordlet/metricsadvisor/framework"
 	"github.com/koordinator-sh/koordinator/pkg/koordlet/resourceexecutor"
 	"github.com/koordinator-sh/koordinator/pkg/koordlet/statesinformer"
@@ -177,6 +178,15 @@ func (p *podResourceCollector) collectPodResUsed() {
 		}
 
 		klog.V(6).Infof("collect pod %s, uid %s finished, metric %+v", podKey, pod.UID, metrics)
+
+		labels := pod.GetLabels()
+		workload := ""
+		if labels != nil {
+			workload = labels[metricRecorder.WorkloadLabelKeyName]
+		}
+
+		metricRecorder.RecordPodUsedCPU(pod.Namespace, pod.Name, string(pod.UID), workload, cpuUsageValue)
+		metricRecorder.RecordPodUsedMemory(pod.Namespace, pod.Name, string(pod.UID), workload, float64(memUsageValue))
 
 		count++
 		allCPUUsageCores.Value += cpuUsageValue

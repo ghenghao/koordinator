@@ -37,6 +37,7 @@ func internalMustRegister(metrics ...prometheus.Collector) {
 
 func init() {
 	internalMustRegister(CommonCollectors...)
+	internalMustRegister(PodModelCollectors...)
 	internalMustRegister(CPUSuppressCollector...)
 	internalMustRegister(CPUBurstCollector...)
 	internalMustRegister(PredictionCollectors...)

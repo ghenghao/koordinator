@@ -11,8 +11,6 @@ REG_PWD ?= ""
 
 KOORDLET_IMG ?= "${REG}/${REG_NS}/koordlet:${GIT_BRANCH}-${GIT_COMMIT_ID}"
 KOORD_MANAGER_IMG ?= "${REG}/${REG_NS}/koord-manager:${GIT_BRANCH}-${GIT_COMMIT_ID}"
-KOORD_SCHEDULER_IMG ?= "${REG}/${REG_NS}/koord-scheduler:${GIT_BRANCH}-${GIT_COMMIT_ID}"
-KOORD_DESCHEDULER_IMG ?= "${REG}/${REG_NS}/koord-descheduler:${GIT_BRANCH}-${GIT_COMMIT_ID}"
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.28
@@ -104,7 +102,7 @@ fast-test: envtest libpfm ## Run tests fast.
 ##@ Build
 
 .PHONY: build
-build: build-koordlet build-koord-manager build-koord-scheduler build-koord-descheduler build-koord-runtime-proxy
+build: build-koordlet build-koord-manager build-koord-runtime-proxy
 
 .PHONY: build-koordlet
 build-koordlet: libpfm ## Build koordlet binary.
@@ -114,20 +112,12 @@ build-koordlet: libpfm ## Build koordlet binary.
 build-koord-manager: ## Build koord-manager binary.
 	go build -o bin/koord-manager cmd/koord-manager/main.go
 
-.PHONY: build-koord-scheduler
-build-koord-scheduler: ## Build koord-scheduler binary.
-	go build -o bin/koord-scheduler cmd/koord-scheduler/main.go
-
-.PHONY: build-koord-descheduler
-build-koord-descheduler: ## Build koord-descheduler binary.
-	go build -o bin/koord-descheduler cmd/koord-descheduler/main.go
-
 .PHONY: build-koord-runtime-proxy
 build-koord-runtime-proxy: ## Build koord-runtime-proxy binary.
 	go build -o bin/koord-runtime-proxy cmd/koord-runtime-proxy/main.go
 
 .PHONY: docker-build
-docker-build: test docker-build-koordlet docker-build-koord-manager docker-build-koord-scheduler docker-build-koord-descheduler
+docker-build: test docker-build-koordlet docker-build-koord-manager
 
 .PHONY: docker-build-koordlet
 docker-build-koordlet: ## Build docker image with the koordlet.
@@ -137,16 +127,8 @@ docker-build-koordlet: ## Build docker image with the koordlet.
 docker-build-koord-manager: ## Build docker image with the koord-manager.
 	docker $(DOCKER_BUILDER) ${DOCKER_BUILD_ARGS} --pull -t ${KOORD_MANAGER_IMG} -f docker/koord-manager.dockerfile .
 
-.PHONY: docker-build-koord-scheduler
-docker-build-koord-scheduler: ## Build docker image with the scheduler.
-	docker $(DOCKER_BUILDER) ${DOCKER_BUILD_ARGS} --pull -t ${KOORD_SCHEDULER_IMG} -f docker/koord-scheduler.dockerfile .
-
-.PHONY: docker-build-koord-descheduler
-docker-build-koord-descheduler: ## Build docker image with the descheduler.
-	docker $(DOCKER_BUILDER) ${DOCKER_BUILD_ARGS} --pull -t ${KOORD_DESCHEDULER_IMG} -f docker/koord-descheduler.dockerfile .
-
 .PHONY: docker-push
-docker-push: docker-push-koordlet docker-push-koord-manager docker-push-koord-scheduler docker-push-koord-descheduler
+docker-push: docker-push-koordlet docker-push-koord-manager
 
 .PHONY: docker-push-koordlet
 docker-push-koordlet: ## Push docker image with the koordlet.
@@ -161,20 +143,6 @@ ifneq ($(REG_USER), "")
 	docker login -u $(REG_USER) -p $(REG_PWD) ${REG}
 endif
 	docker push ${KOORD_MANAGER_IMG}
-
-.PHONY: docker-push-koord-scheduler
-docker-push-koord-scheduler: ## Push docker image with the scheduler.
-ifneq ($(REG_USER), "")
-	docker login -u $(REG_USER) -p $(REG_PWD) ${REG}
-endif
-	docker push ${KOORD_SCHEDULER_IMG}
-
-.PHONY: docker-push-koord-descheduler
-docker-push-koord-descheduler: ## Push docker image with the descheduler.
-ifneq ($(REG_USER), "")
-	docker login -u $(REG_USER) -p $(REG_PWD) ${REG}
-endif
-	docker push ${KOORD_DESCHEDULER_IMG}
 
 ##@ Deployment
 
